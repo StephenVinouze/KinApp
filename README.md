@@ -1,6 +1,6 @@
 # KinApp
 [![Release](https://jitpack.io/v/StephenVinouze/KinApp.svg)](https://jitpack.io/#StephenVinouze/KinApp)
-[![Build Status](https://travis-ci.org/StephenVinouze/KinApp.svg)](https://travis-ci.org/StephenVinouze/KinApp)
+[![Build Status](https://travis-ci.org/StephenVinouze/KinApp.svg?branch=master)](https://travis-ci.org/StephenVinouze/KinApp)
 [![API](https://img.shields.io/badge/API-9%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=9)
 [![GitHub
 license](http://img.shields.io/badge/license-APACHE2-blue.svg)](https://github.com/StephenVinouze/AdvancedRecyclerView/blob/master/LICENSE)
@@ -87,6 +87,52 @@ override fun onPurchaseFinished(purchaseResult: KinAppPurchaseResult, purchase: 
     }
 }
 ```
+
+## Basic usage
+
+Once your **KinAppManager** is configured, you can use the various features offered by this library. Be advised that the library uses the experimental Kotlin coroutines to elegantly handle asynchronous requests in order to avoid blocking the main thread. You can refer to the *sample* application if you need some help.
+
+### Fetching products
+
+As soon as you have configured your application on the Developer console and added some InApp products, you can retrieve them in your application (:warning: Suspend call) :
+
+```kotlin
+runBlocking {
+	val products = billingManager.fetchProducts(<your_products_id_here>, KinAppProductType.INAPP)
+}
+```
+
+You can specify the nature of the product you want to fetch. It can be either of type **INAPP** or **SUBSCRIPTION**. This call is marked as *suspend* as it needs to be run asynchronously without blocking the main thread. This is why you must wrap it inside a `runBlocking` block.
+
+### Purchase product
+
+Purchasing a product can be done using a *product_id* and by specifying the calling activity. This is mandatory in order to be called back in the `onActivityResult` method. Finally, same as fetching product, just specify the nature oy your product :
+
+```kotlin
+billingManager.purchase(this, <your_products_id_here>, KinAppProductType.INAPP)
+```
+
+### Consuming product
+
+This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understant this and distinguish between the two types of InApp products. You can consume an item by using these lines (:warning: Suspend call) :
+
+This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understant this and distinguish between the two types of InApp products. You can consume an item by using these lines (:warning: Suspend call) :
+
+```kotlin
+runBlocking {
+	billingManager.consumePurchase(<your_purchase_object>)
+}
+```
+
+### Restoring purchases
+
+Finally, you must be able to handle purchase restoration in your application. This can be easily done using these lines :
+
+```kotlin
+val purchases = billingManager.restorePurchases(KinAppProductType.INAPP)
+```
+
+Note that this will only bring you all the purchases you own.
 
 ## Pull requests
 
