@@ -94,7 +94,7 @@ Once your **KinAppManager** is configured, you can use the various features offe
 
 ### Fetching products
 
-As soon as you have configured your application on the Developer console and added some InApp products, you can retrieve them in your application (:warning: Suspend call) :
+As soon as you have configured your application on the Developer console and added some InApp products, you can retrieve them in your application ( :warning: Suspend call) :
 
 ```kotlin
 runBlocking {
@@ -114,9 +114,7 @@ billingManager.purchase(this, <your_products_id_here>, KinAppProductType.INAPP)
 
 ### Consuming product
 
-This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understant this and distinguish between the two types of InApp products. You can consume an item by using these lines (:warning: Suspend call) :
-
-This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understant this and distinguish between the two types of InApp products. You can consume an item by using these lines (:warning: Suspend call) :
+This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understant this and distinguish between the two types of InApp products. You can consume an item by using these lines ( :warning: Suspend call) :
 
 ```kotlin
 runBlocking {
@@ -133,6 +131,24 @@ val purchases = billingManager.restorePurchases(KinAppProductType.INAPP)
 ```
 
 Note that this will only bring you all the purchases you own.
+
+## Subscriptions
+
+This library should be able to manage subscription and was designed that way. However, no subscription were made while developing this library hence cannot be marked as fully supported. Any test/review/PR is welcomed to fully support this ;)
+
+## Testing InApp purchase
+
+You can use the static responses provided by Google to test the basic cases and ensure your application is correctly responding even before adding any products to your *Developer Console*. Just use this :
+
+```kotlin
+billingManager.purchase(this, KinAppManager.TEST_PURCHASE_SUCCESS, KinAppProductType.INAPP)
+```
+
+This will present to you a test product dialog that always succeed. You can try the other static responses :
+
+* TEST_PURCHASE_CANCELED
+* TEST_PURCHASE_REFUNDED
+* TEST_PURCHASE_UNAVAILABLE
 
 ## Pull requests
 
