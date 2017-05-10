@@ -6,16 +6,30 @@
     android:orientation="vertical">
 
     <Button
+        android:id="@+id/fetch_products_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fetch products" />
+
+    <Button
         android:id="@+id/buy_available_product_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:text="Buy available product" />
 
     <Button
-        android:id="@+id/buy_unavailable_product_button"
+        android:id="@+id/consume_purchases_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="Buy unavailable product" />
+        android:text="Consume purchase" />
+
+    <Button
+        android:id="@+id/restore_purchases_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Restore purchases" />
 
 </LinearLayout>

@@ -20,7 +20,7 @@ object SecurityManager {
     /**
      * Verifies that the data was signed with the given signature, and returns
      * the verified purchase. The data is in JSON format and signed
-     * with a private key. The data also contains the Purchase state
+     * with a private key. The data also contains the KinAppPurchase state
      * and product ID of the purchase.
      * @param base64PublicKey the base64-encoded public key to use for verifying.
      * *
@@ -30,7 +30,7 @@ object SecurityManager {
      */
     fun verifyPurchase(base64PublicKey: String, signedData: String, signature: String): Boolean {
         if (TextUtils.isEmpty(signedData) || TextUtils.isEmpty(base64PublicKey) || TextUtils.isEmpty(signature)) {
-            Log.e(TAG, "Purchase verification failed: missing data.")
+            Log.e(TAG, "KinAppPurchase verification failed: missing data.")
             return false
         }
 

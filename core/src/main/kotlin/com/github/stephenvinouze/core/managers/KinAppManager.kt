@@ -10,9 +10,10 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
 import com.android.vending.billing.IInAppBillingService
-import com.github.stephenvinouze.core.models.Product
-import com.github.stephenvinouze.core.models.Purchase
-import com.github.stephenvinouze.core.models.PurchaseState
+import com.github.stephenvinouze.core.models.KinAppProduct
+import com.github.stephenvinouze.core.models.KinAppPurchase
+import com.github.stephenvinouze.core.models.KinAppPurchaseResult
+import com.github.stephenvinouze.core.models.KinAppPurchaseState
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 import org.json.JSONObject
@@ -21,28 +22,28 @@ import org.json.JSONObject
 /**
  * Created by stephenvinouze on 13/03/2017.
  */
-class BillingManager(private val context: Context, private val developerPayload: String) {
+class KinAppManager(private val context: Context, private val developerPayload: String) {
 
     companion object {
-        val BILLING_TEST_PURCHASE_PREFIX = "android.test"
-        val BILLING_TEST_PURCHASE_SUCCESS = BILLING_TEST_PURCHASE_PREFIX + ".purchased"
-        val BILLING_TEST_PURCHASE_CANCELED = BILLING_TEST_PURCHASE_PREFIX + ".canceled"
-        val BILLING_TEST_PURCHASE_REFUNDED = BILLING_TEST_PURCHASE_PREFIX + ".refunded"
-        val BILLING_TEST_PURCHASE_UNAVAILABLE = BILLING_TEST_PURCHASE_PREFIX + ".item_unavailable"
+        val KINAPP_TEST_PURCHASE_PREFIX = "android.test"
+        val KINAPP_TEST_PURCHASE_SUCCESS = KINAPP_TEST_PURCHASE_PREFIX + ".purchased"
+        val KINAPP_TEST_PURCHASE_CANCELED = KINAPP_TEST_PURCHASE_PREFIX + ".canceled"
+        val KINAPP_TEST_PURCHASE_REFUNDED = KINAPP_TEST_PURCHASE_PREFIX + ".refunded"
+        val KINAPP_TEST_PURCHASE_UNAVAILABLE = KINAPP_TEST_PURCHASE_PREFIX + ".item_unavailable"
 
-        private const val BILLING_REQUEST_CODE = 1001
+        private const val KINAPP_REQUEST_CODE = 1001
+        private const val KINAPP_RESPONSE_RESULT_OK = 0
+        private const val KINAPP_RESPONSE_RESULT_ALREADY_OWNED = 7
 
-        private const val BILLING_API_VERSION = 3
+        private const val KINAPP_API_VERSION = 3
 
-        private const val BILLING_INTENT = "com.android.vending.billing.InAppBillingService.BIND"
-        private const val BILLING_PACKAGE = "com.android.vending"
+        private const val KINAPP_INTENT = "com.android.vending.billing.InAppBillingService.BIND"
+        private const val KINAPP_PACKAGE = "com.android.vending"
 
-        private const val BILLING_INAPP_TYPE = "inapp"
-        private const val BILLING_SUBS_TYPE = "subs"
+        private const val KINAPP_INAPP_TYPE = "inapp"
+        private const val KINAPP_SUBS_TYPE = "subs"
 
         private const val GET_ITEM_LIST = "ITEM_ID_LIST"
-
-        private const val BILLING_RESPONSE_RESULT_OK = 0
 
         private const val RESPONSE_CODE = "RESPONSE_CODE"
         private const val RESPONSE_ITEM_LIST = "DETAILS_LIST"
@@ -52,19 +53,9 @@ class BillingManager(private val context: Context, private val developerPayload:
         private const val RESPONSE_INAPP_PURCHASE_DATA_LIST = "INAPP_PURCHASE_DATA_LIST"
     }
 
-    enum class PurchaseResult {
-        SUCCESS, CANCEL, INVALID_PURCHASE, INVALID_SIGNATURE
-    }
-
     private var billingService: IInAppBillingService? = null
-    private var listener: BillingListener? = null
-
-    interface BillingListener {
-        fun onBillingReady()
-        fun onPurchaseFinished(purchaseResult: PurchaseResult, purchase: Purchase?)
-    }
-
-    var billingConnection: ServiceConnection = object : ServiceConnection {
+    private var listener: KinAppListener? = null
+    private var billingConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
             billingService = IInAppBillingService.Stub.asInterface(service)
             listener?.onBillingReady()
@@ -75,10 +66,10 @@ class BillingManager(private val context: Context, private val developerPayload:
         }
     }
 
-    fun bind(listener: BillingListener? = null) {
+    fun bind(listener: KinAppListener? = null) {
         this.listener = listener
-        val billingIntent = Intent(BILLING_INTENT)
-        billingIntent.`package` = BILLING_PACKAGE
+        val billingIntent = Intent(KINAPP_INTENT)
+        billingIntent.`package` = KINAPP_PACKAGE
         context.bindService(billingIntent, billingConnection, Context.BIND_AUTO_CREATE)
     }
 
@@ -89,22 +80,22 @@ class BillingManager(private val context: Context, private val developerPayload:
     }
 
     fun isInAppBillingSupported(): Boolean {
-        return isBillingSupported(BILLING_INAPP_TYPE)
+        return isBillingSupported(KINAPP_INAPP_TYPE)
     }
 
     fun isSubscriptionBillingSupported(): Boolean {
-        return isBillingSupported(BILLING_SUBS_TYPE)
+        return isBillingSupported(KINAPP_SUBS_TYPE)
     }
 
-    suspend fun fetchProducts(productIds: ArrayList<String>): List<Product>? {
+    suspend fun fetchProducts(productIds: ArrayList<String>): List<KinAppProduct>? {
         return async(CommonPool) {
             val bundle = Bundle()
             bundle.putStringArrayList(GET_ITEM_LIST, productIds)
             try {
-                val responseBundle = billingService?.getSkuDetails(BILLING_API_VERSION, this@BillingManager.context.packageName, BILLING_INAPP_TYPE, bundle)
-                if (getResult(responseBundle, RESPONSE_CODE) == BILLING_RESPONSE_RESULT_OK) {
+                val responseBundle = billingService?.getSkuDetails(KINAPP_API_VERSION, this@KinAppManager.context.packageName, KINAPP_INAPP_TYPE, bundle)
+                if (getResult(responseBundle, RESPONSE_CODE) == KINAPP_RESPONSE_RESULT_OK) {
                     val inappProducts = responseBundle?.getStringArrayList(RESPONSE_ITEM_LIST)
-                    val products = arrayListOf<Product>()
+                    val products = arrayListOf<KinAppProduct>()
                     inappProducts?.forEach {
                         products.add(getProduct(it))
                     }
@@ -118,13 +109,13 @@ class BillingManager(private val context: Context, private val developerPayload:
         }.await()
     }
 
-    fun restorePurchases(): List<Purchase>? {
+    fun restorePurchases(): List<KinAppPurchase>? {
         try {
-            val responseBundle = billingService?.getPurchases(BILLING_API_VERSION, context.packageName, BILLING_INAPP_TYPE, null)
-            if (getResult(responseBundle, RESPONSE_CODE) == BILLING_RESPONSE_RESULT_OK) {
+            val responseBundle = billingService?.getPurchases(KINAPP_API_VERSION, context.packageName, KINAPP_INAPP_TYPE, null)
+            if (getResult(responseBundle, RESPONSE_CODE) == KINAPP_RESPONSE_RESULT_OK) {
                 val inappPurchases = responseBundle?.getStringArrayList(RESPONSE_INAPP_PURCHASE_DATA_LIST)
                 if (inappPurchases != null) {
-                    val purchases = arrayListOf<Purchase>()
+                    val purchases = arrayListOf<KinAppPurchase>()
                     inappPurchases.forEach {
                         purchases.add(getPurchase(it))
                     }
@@ -139,10 +130,13 @@ class BillingManager(private val context: Context, private val developerPayload:
 
     fun purchase(activity: Activity, productId: String) {
         try {
-            val responseBundle = billingService?.getBuyIntent(BILLING_API_VERSION, context.packageName, productId, BILLING_INAPP_TYPE, developerPayload)
-            if (getResult(responseBundle, RESPONSE_CODE) == BILLING_RESPONSE_RESULT_OK) {
+            val responseBundle = billingService?.getBuyIntent(KINAPP_API_VERSION, context.packageName, productId, KINAPP_INAPP_TYPE, developerPayload)
+            val result = getResult(responseBundle, RESPONSE_CODE)
+            if (result == KINAPP_RESPONSE_RESULT_OK) {
                 val pendingIntent = responseBundle?.getParcelable<PendingIntent>(RESPONSE_BUY_INTENT)
-                activity.startIntentSenderForResult(pendingIntent?.intentSender, BILLING_REQUEST_CODE, Intent(), 0, 0, 0)
+                activity.startIntentSenderForResult(pendingIntent?.intentSender, KINAPP_REQUEST_CODE, Intent(), 0, 0, 0)
+            } else if (result == KINAPP_RESPONSE_RESULT_ALREADY_OWNED) {
+                listener?.onPurchaseFinished(KinAppPurchaseResult.ALREADY_OWNED, null)
             }
         } catch (e: RemoteException) {
             e.printStackTrace()
@@ -150,36 +144,36 @@ class BillingManager(private val context: Context, private val developerPayload:
     }
 
     fun verifyPurchase(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        if (requestCode == BILLING_REQUEST_CODE) {
+        if (requestCode == KINAPP_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 val purchaseData = data?.getStringExtra(RESPONSE_INAPP_PURCHASE_DATA)
                 val dataSignature = data?.getStringExtra(RESPONSE_INAPP_SIGNATURE)
                 if (purchaseData != null) {
                     val purchase = getPurchase(purchaseData)
-                    if (purchase.productId.startsWith(BILLING_TEST_PURCHASE_PREFIX) ||
+                    if (purchase.productId.startsWith(KINAPP_TEST_PURCHASE_PREFIX) ||
                             (dataSignature != null && SecurityManager.verifyPurchase(developerPayload, purchaseData, dataSignature))) {
-                        listener?.onPurchaseFinished(PurchaseResult.SUCCESS, purchase)
+                        listener?.onPurchaseFinished(KinAppPurchaseResult.SUCCESS, purchase)
                     } else {
-                        listener?.onPurchaseFinished(PurchaseResult.INVALID_SIGNATURE, null)
+                        listener?.onPurchaseFinished(KinAppPurchaseResult.INVALID_SIGNATURE, null)
                     }
                 } else {
-                    listener?.onPurchaseFinished(PurchaseResult.INVALID_PURCHASE, null)
+                    listener?.onPurchaseFinished(KinAppPurchaseResult.INVALID_PURCHASE, null)
                 }
             } else if (resultCode == Activity.RESULT_CANCELED) {
-                listener?.onPurchaseFinished(PurchaseResult.CANCEL, null)
+                listener?.onPurchaseFinished(KinAppPurchaseResult.CANCEL, null)
             } else {
-                listener?.onPurchaseFinished(PurchaseResult.INVALID_PURCHASE, null)
+                listener?.onPurchaseFinished(KinAppPurchaseResult.INVALID_PURCHASE, null)
             }
             return true
         }
         return false
     }
 
-    suspend fun consumePurchase(purchase: Purchase): Boolean {
+    suspend fun consumePurchase(purchase: KinAppPurchase): Boolean {
         return async(CommonPool) {
             try {
-                val response = billingService?.consumePurchase(BILLING_API_VERSION, this@BillingManager.context.packageName, purchase.purchaseToken)
-                return@async response == BILLING_RESPONSE_RESULT_OK
+                val response = billingService?.consumePurchase(KINAPP_API_VERSION, this@KinAppManager.context.packageName, purchase.purchaseToken)
+                return@async response == KINAPP_RESPONSE_RESULT_OK
             } catch (e: RemoteException) {
                 e.printStackTrace()
                 return@async false
@@ -188,16 +182,16 @@ class BillingManager(private val context: Context, private val developerPayload:
     }
 
     private fun isBillingSupported(type: String): Boolean {
-        return billingService?.isBillingSupported(BILLING_API_VERSION, context.packageName, type) == BILLING_RESPONSE_RESULT_OK
+        return billingService?.isBillingSupported(KINAPP_API_VERSION, context.packageName, type) == KINAPP_RESPONSE_RESULT_OK
     }
 
     private fun getResult(responseBundle: Bundle?, responseExtra: String): Int? {
         return responseBundle?.getInt(responseExtra)
     }
 
-    private fun getProduct(productData: String): Product {
+    private fun getProduct(productData: String): KinAppProduct {
         val inappProduct = JSONObject(productData)
-        return Product(
+        return KinAppProduct(
                 product_id = inappProduct.optString("productId"),
                 title = inappProduct.optString("title"),
                 type = inappProduct.optString("type"),
@@ -207,18 +201,23 @@ class BillingManager(private val context: Context, private val developerPayload:
                 priceCurrencyCode = inappProduct.optString("price_currency_code"))
     }
 
-    private fun getPurchase(purchaseData: String): Purchase {
+    private fun getPurchase(purchaseData: String): KinAppPurchase {
         val item = JSONObject(purchaseData)
-        return Purchase(
+        return KinAppPurchase(
                 orderId = item.optString("orderId"),
                 productId = item.optString("productId"),
                 purchaseTime = item.optLong("purchaseTime"),
                 purchaseToken = item.optString("purchaseToken"),
-                purchaseState = PurchaseState.values()[item.optInt("purchaseState", PurchaseState.CANCELED.value)],
+                purchaseState = KinAppPurchaseState.values()[item.optInt("purchaseState", KinAppPurchaseState.CANCELED.value)],
                 packageName = item.optString("purchaseToken"),
                 developerPayload = item.optString("developerPayload"),
                 autoRenewing = item.optBoolean("autoRenewing")
         )
+    }
+
+    interface KinAppListener {
+        fun onBillingReady()
+        fun onPurchaseFinished(purchaseResult: KinAppPurchaseResult, purchase: KinAppPurchase?)
     }
 
 }

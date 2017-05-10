@@ -25,7 +25,7 @@ import android.os.Bundle;
  *    price, type, title and description.
  * 2. The purchase flow is synchronous and purchase information is available immediately
  *    after it completes.
- * 3. Purchase information of in-app purchases is maintained within the Google Play system
+ * 3. KinAppPurchase information of in-app purchases is maintained within the Google Play system
  *    till the purchase is consumed.
  * 4. An API to consume a purchase of an inapp item. All purchases of one-time
  *    in-app items are consumable and thereafter can be purchased again.
