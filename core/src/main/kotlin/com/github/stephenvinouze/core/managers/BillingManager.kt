@@ -12,6 +12,7 @@ import android.os.RemoteException
 import com.android.vending.billing.IInAppBillingService
 import com.github.stephenvinouze.core.models.Product
 import com.github.stephenvinouze.core.models.Purchase
+import com.github.stephenvinouze.core.models.PurchaseState
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.async
 import org.json.JSONObject
@@ -20,11 +21,9 @@ import org.json.JSONObject
 /**
  * Created by stephenvinouze on 13/03/2017.
  */
-class BillingManager(private val activity: Activity, private val developerPayload: String) {
+class BillingManager(private val context: Context, private val developerPayload: String) {
 
     companion object {
-        var products: List<Product>? = null
-
         val BILLING_TEST_PURCHASE_PREFIX = "android.test"
         val BILLING_TEST_PURCHASE_SUCCESS = BILLING_TEST_PURCHASE_PREFIX + ".purchased"
         val BILLING_TEST_PURCHASE_CANCELED = BILLING_TEST_PURCHASE_PREFIX + ".canceled"
@@ -80,12 +79,12 @@ class BillingManager(private val activity: Activity, private val developerPayloa
         this.listener = listener
         val billingIntent = Intent(BILLING_INTENT)
         billingIntent.`package` = BILLING_PACKAGE
-        activity.bindService(billingIntent, billingConnection, Context.BIND_AUTO_CREATE)
+        context.bindService(billingIntent, billingConnection, Context.BIND_AUTO_CREATE)
     }
 
     fun unbind() {
         if (billingService != null) {
-            activity.unbindService(billingConnection)
+            context.unbindService(billingConnection)
         }
     }
 
@@ -97,21 +96,17 @@ class BillingManager(private val activity: Activity, private val developerPayloa
         return isBillingSupported(BILLING_SUBS_TYPE)
     }
 
-    suspend fun fetchProducts(): List<Product>? {
+    suspend fun fetchProducts(productIds: ArrayList<String>): List<Product>? {
         return async(CommonPool) {
-            val skuDetails = products?.map { it.product_id } as ArrayList<String>
             val bundle = Bundle()
-            bundle.putStringArrayList(GET_ITEM_LIST, skuDetails)
+            bundle.putStringArrayList(GET_ITEM_LIST, productIds)
             try {
-                val responseBundle = billingService?.getSkuDetails(BILLING_API_VERSION, activity.packageName, BILLING_INAPP_TYPE, bundle)
+                val responseBundle = billingService?.getSkuDetails(BILLING_API_VERSION, this@BillingManager.context.packageName, BILLING_INAPP_TYPE, bundle)
                 if (getResult(responseBundle, RESPONSE_CODE) == BILLING_RESPONSE_RESULT_OK) {
                     val inappProducts = responseBundle?.getStringArrayList(RESPONSE_ITEM_LIST)
+                    val products = arrayListOf<Product>()
                     inappProducts?.forEach {
-                        val inappProduct = JSONObject(it)
-                        val product = products?.filter { it.product_id == inappProduct.getString("productId") }?.first()
-                        product?.title = inappProduct.getString("title")
-                        product?.description = inappProduct.getString("description")
-                        product?.price = inappProduct.getString("price")
+                        products.add(getProduct(it))
                     }
                     return@async products
                 }
@@ -125,7 +120,7 @@ class BillingManager(private val activity: Activity, private val developerPayloa
 
     fun restorePurchases(): List<Purchase>? {
         try {
-            val responseBundle = billingService?.getPurchases(BILLING_API_VERSION, activity.packageName, BILLING_INAPP_TYPE, null)
+            val responseBundle = billingService?.getPurchases(BILLING_API_VERSION, context.packageName, BILLING_INAPP_TYPE, null)
             if (getResult(responseBundle, RESPONSE_CODE) == BILLING_RESPONSE_RESULT_OK) {
                 val inappPurchases = responseBundle?.getStringArrayList(RESPONSE_INAPP_PURCHASE_DATA_LIST)
                 if (inappPurchases != null) {
@@ -142,9 +137,9 @@ class BillingManager(private val activity: Activity, private val developerPayloa
         return null
     }
 
-    fun purchase(sku: String) {
+    fun purchase(activity: Activity, productId: String) {
         try {
-            val responseBundle = billingService?.getBuyIntent(BILLING_API_VERSION, activity.packageName, sku, BILLING_INAPP_TYPE, developerPayload)
+            val responseBundle = billingService?.getBuyIntent(BILLING_API_VERSION, context.packageName, productId, BILLING_INAPP_TYPE, developerPayload)
             if (getResult(responseBundle, RESPONSE_CODE) == BILLING_RESPONSE_RESULT_OK) {
                 val pendingIntent = responseBundle?.getParcelable<PendingIntent>(RESPONSE_BUY_INTENT)
                 activity.startIntentSenderForResult(pendingIntent?.intentSender, BILLING_REQUEST_CODE, Intent(), 0, 0, 0)
@@ -161,9 +156,8 @@ class BillingManager(private val activity: Activity, private val developerPayloa
                 val dataSignature = data?.getStringExtra(RESPONSE_INAPP_SIGNATURE)
                 if (purchaseData != null) {
                     val purchase = getPurchase(purchaseData)
-                    if (!purchase.productId.startsWith(BILLING_TEST_PURCHASE_PREFIX) &&
-                            dataSignature != null &&
-                            SecurityManager.verifyPurchase(developerPayload, purchaseData, dataSignature)) {
+                    if (purchase.productId.startsWith(BILLING_TEST_PURCHASE_PREFIX) ||
+                            (dataSignature != null && SecurityManager.verifyPurchase(developerPayload, purchaseData, dataSignature))) {
                         listener?.onPurchaseFinished(PurchaseResult.SUCCESS, purchase)
                     } else {
                         listener?.onPurchaseFinished(PurchaseResult.INVALID_SIGNATURE, null)
@@ -184,7 +178,7 @@ class BillingManager(private val activity: Activity, private val developerPayloa
     suspend fun consumePurchase(purchase: Purchase): Boolean {
         return async(CommonPool) {
             try {
-                val response = billingService?.consumePurchase(BILLING_API_VERSION, activity.packageName, purchase.purchaseToken)
+                val response = billingService?.consumePurchase(BILLING_API_VERSION, this@BillingManager.context.packageName, purchase.purchaseToken)
                 return@async response == BILLING_RESPONSE_RESULT_OK
             } catch (e: RemoteException) {
                 e.printStackTrace()
@@ -194,21 +188,36 @@ class BillingManager(private val activity: Activity, private val developerPayloa
     }
 
     private fun isBillingSupported(type: String): Boolean {
-        return billingService?.isBillingSupported(BILLING_API_VERSION, activity.packageName, type) == BILLING_RESPONSE_RESULT_OK
+        return billingService?.isBillingSupported(BILLING_API_VERSION, context.packageName, type) == BILLING_RESPONSE_RESULT_OK
     }
 
     private fun getResult(responseBundle: Bundle?, responseExtra: String): Int? {
         return responseBundle?.getInt(responseExtra)
     }
 
+    private fun getProduct(productData: String): Product {
+        val inappProduct = JSONObject(productData)
+        return Product(
+                product_id = inappProduct.optString("productId"),
+                title = inappProduct.optString("title"),
+                type = inappProduct.optString("type"),
+                description = inappProduct.optString("description"),
+                price = inappProduct.optString("price"),
+                priceAmountMicros = inappProduct.optLong("price_amount_micros"),
+                priceCurrencyCode = inappProduct.optString("price_currency_code"))
+    }
+
     private fun getPurchase(purchaseData: String): Purchase {
         val item = JSONObject(purchaseData)
         return Purchase(
-                orderId = if (item.has("orderId")) item.getString("orderId") else null,
-                productId = item.getString("productId"),
-                purchaseTime = item.getLong("purchaseTime"),
-                purchaseToken = item.getString("purchaseToken"),
-                developerPayload = item.getString("developerPayload")
+                orderId = item.optString("orderId"),
+                productId = item.optString("productId"),
+                purchaseTime = item.optLong("purchaseTime"),
+                purchaseToken = item.optString("purchaseToken"),
+                purchaseState = PurchaseState.values()[item.optInt("purchaseState", PurchaseState.CANCELED.value)],
+                packageName = item.optString("purchaseToken"),
+                developerPayload = item.optString("developerPayload"),
+                autoRenewing = item.optBoolean("autoRenewing")
         )
     }
 

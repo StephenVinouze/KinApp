@@ -9,8 +9,9 @@ import org.parceler.ParcelConstructor
 @Parcel(Parcel.Serialization.BEAN)
 data class Product @ParcelConstructor constructor(
         val product_id: String,
-        val name: String,
-        var title: String,
-        var description: String,
-        var price: String,
-        val duration: Int)
+        val type: String,
+        val title: String,
+        val description: String,
+        val price: String,
+        val priceAmountMicros: Long,
+        val priceCurrencyCode: String)

@@ -8,8 +8,11 @@ import org.parceler.ParcelConstructor
  */
 @Parcel(Parcel.Serialization.BEAN)
 data class Purchase @ParcelConstructor constructor(
-        val orderId: String?,
+        val orderId: String,
         val productId: String,
         val purchaseTime: Long,
         val purchaseToken: String,
-        val developerPayload: String)
+        val purchaseState: PurchaseState,
+        val packageName: String,
+        val developerPayload: String,
+        val autoRenewing: Boolean)
