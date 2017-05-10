@@ -7,7 +7,7 @@ android {
     buildToolsVersion "25.0.3"
     defaultConfig {
         applicationId "com.github.stephenvinouze.kinapp"
-        minSdkVersion 16
+        minSdkVersion 13
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -24,6 +24,13 @@ android {
         test.java.srcDirs += 'src/test/kotlin'
         androidTest.java.srcDirs += 'src/androidTest/kotlin'
     }
+    lintOptions {
+        checkReleaseBuilds false
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError false
+    }
+
 }
 
 def appcompat_version = "25.3.1"
