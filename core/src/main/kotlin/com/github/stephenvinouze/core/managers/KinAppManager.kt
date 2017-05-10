@@ -48,6 +48,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
         private const val RESPONSE_INAPP_PURCHASE_DATA = "INAPP_PURCHASE_DATA"
         private const val RESPONSE_INAPP_SIGNATURE = "INAPP_DATA_SIGNATURE"
         private const val RESPONSE_INAPP_PURCHASE_DATA_LIST = "INAPP_PURCHASE_DATA_LIST"
+        private const val RESPONSE_INAPP_CONTINUATION_TOKEN = "INAPP_CONTINUATION_TOKEN"
     }
 
     private var billingService: IInAppBillingService? = null
@@ -104,17 +105,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
 
     fun restorePurchases(productType: KinAppProductType): List<KinAppPurchase>? {
         try {
-            val responseBundle = billingService?.getPurchases(KINAPP_API_VERSION, context.packageName, productType.value, null)
-            if (getResult(responseBundle, RESPONSE_CODE) == KINAPP_RESPONSE_RESULT_OK) {
-                val inappPurchases = responseBundle?.getStringArrayList(RESPONSE_INAPP_PURCHASE_DATA_LIST)
-                if (inappPurchases != null) {
-                    val purchases = arrayListOf<KinAppPurchase>()
-                    inappPurchases.forEach {
-                        purchases.add(getPurchase(it))
-                    }
-                    return purchases
-                }
-            }
+            return retrievePurchases(mutableListOf<KinAppPurchase>(), productType, null)
         } catch (e: RemoteException) {
             e.printStackTrace()
         }
@@ -202,6 +193,26 @@ class KinAppManager(private val context: Context, private val developerPayload: 
                 developerPayload = item.optString("developerPayload"),
                 autoRenewing = item.optBoolean("autoRenewing")
         )
+    }
+
+    private fun retrievePurchases(purchases: MutableList<KinAppPurchase>, productType: KinAppProductType, continuationToken: String?): MutableList<KinAppPurchase> {
+        val responseBundle = billingService?.getPurchases(KINAPP_API_VERSION, context.packageName, productType.value, continuationToken)
+        if (getResult(responseBundle, RESPONSE_CODE) == KINAPP_RESPONSE_RESULT_OK) {
+            val inappPurchases = responseBundle?.getStringArrayList(RESPONSE_INAPP_PURCHASE_DATA_LIST)
+            if (inappPurchases != null) {
+                inappPurchases.forEach {
+                    purchases.add(getPurchase(it))
+                }
+
+                val newContinuationToken = responseBundle.getString(RESPONSE_INAPP_CONTINUATION_TOKEN)
+                if (newContinuationToken != null) {
+                    retrievePurchases(purchases, productType, newContinuationToken)
+                }
+
+                return purchases
+            }
+        }
+        return purchases
     }
 
     interface KinAppListener {
