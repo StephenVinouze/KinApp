@@ -25,6 +25,10 @@ dependencies {
 }
 ```
 
+## Configuring your InApp Purchase
+
+Before integrating this library to manage your IAP, you probably must have already configured your application to integrate some products that you want your end users to buy. Understanding how this is done is rather well documented, but can be quite confusing as to how it really works. In addition to this library, I have documented the complete workflow to properly configure your IAP step by step. This document is attached to this project [here](INAPP_SETUP.md)
+
 ## Getting started
 
 In your *AndroidManifest.xml* file, add the following line if your manifest merger is disabled :
@@ -32,9 +36,9 @@ In your *AndroidManifest.xml* file, add the following line if your manifest merg
 ```xml
  <uses-permission android:name="com.android.vending.BILLING" />
  ```
- 
+
 You will need a *developer payload* that can be found in your Google Developer Console from your already set up application. This id is uniquely attached to this application and will refer to your InApp products that you will declare.
- 
+
 In your calling Activity, instanciate the **KinAppManager** by adding the following lines :
 
 ```kotlin
@@ -69,7 +73,7 @@ override fun onPurchaseFinished(purchaseResult: KinAppPurchaseResult, purchase: 
     // Handle your purchase result here
     when (purchaseResult) {
         KinAppPurchaseResult.SUCCESS -> {
-            // Purchase successfull with a non-null KinAppPurchase object.
+            // Purchase successful with a non-null KinAppPurchase object.
             // You may choose to consume this item right now if you want to be able to re-buy it
         }
         KinAppPurchaseResult.ALREADY_OWNED -> {
@@ -114,7 +118,7 @@ billingManager.purchase(this, <your_products_id_here>, KinAppProductType.INAPP)
 
 ### Consuming product
 
-This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understant this and distinguish between the two types of InApp products. You can consume an item by using these lines ( :warning: Suspend call) :
+This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understand this and distinguish between the two types of InApp products. You can consume an item by using these lines ( :warning: Suspend call) :
 
 ```kotlin
 runBlocking {
