@@ -22,7 +22,7 @@ Then add the following dependency in your project.
 
 ```gradle
 dependencies {
-  compile "com.github.StephenVinouze.KinApp:core:1.0.0"
+  compile "com.github.StephenVinouze:KinApp:1.0.0"
 }
 ```
 
