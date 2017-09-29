@@ -77,9 +77,8 @@ class KinAppManager(private val context: Context, private val developerPayload: 
         }
     }
 
-    fun isBillingSupported(productType: KinAppProductType): Boolean {
-        return billingService?.isBillingSupported(KINAPP_API_VERSION, context.packageName, productType.value) == KINAPP_RESPONSE_RESULT_OK
-    }
+    fun isBillingSupported(productType: KinAppProductType): Boolean =
+            billingService?.isBillingSupported(KINAPP_API_VERSION, context.packageName, productType.value) == KINAPP_RESPONSE_RESULT_OK
 
     suspend fun fetchProducts(productIds: ArrayList<String>, productType: KinAppProductType): List<KinAppProduct>? {
         return async(CommonPool) {
@@ -105,7 +104,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
 
     fun restorePurchases(productType: KinAppProductType): List<KinAppPurchase>? {
         try {
-            return retrievePurchases(mutableListOf<KinAppPurchase>(), productType, null)
+            return retrievePurchases(mutableListOf(), productType, null)
         } catch (e: RemoteException) {
             e.printStackTrace()
         }
@@ -165,9 +164,8 @@ class KinAppManager(private val context: Context, private val developerPayload: 
         }.await()
     }
 
-    private fun getResult(responseBundle: Bundle?, responseExtra: String): Int? {
-        return responseBundle?.getInt(responseExtra)
-    }
+    private fun getResult(responseBundle: Bundle?, responseExtra: String): Int? =
+            responseBundle?.getInt(responseExtra)
 
     private fun getProduct(productData: String): KinAppProduct {
         val inappProduct = JSONObject(productData)

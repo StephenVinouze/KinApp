@@ -63,35 +63,42 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnC
     }
 
     override fun onClick(view: View?) {
-        when (view) {
-            fetchProductsButton -> {
-                runBlocking {
-                    products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP) as MutableList<KinAppProduct>
-                    Toast.makeText(this@MainActivity, "Fetched " + products?.size + " products", Toast.LENGTH_LONG).show()
-                    if (products?.isNotEmpty() == true)
-                        buyProductButton.isEnabled = true
-                }
-            }
-            buyProductButton -> {
-                products?.first()?.let {
-                    billingManager.purchase(this, it.product_id, KinAppProductType.INAPP)
-                }
-            }
-            consumePurchasesButton -> {
-                purchases?.forEach {
+        if (billingManager.isBillingSupported(KinAppProductType.INAPP)) {
+            when (view) {
+                fetchProductsButton -> {
                     runBlocking {
-                        billingManager.consumePurchase(it)
-                        consumePurchasesButton.isEnabled = false
+                        products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP) as MutableList<KinAppProduct>
+                        Toast.makeText(this@MainActivity, "Fetched " + products?.size + " products", Toast.LENGTH_LONG).show()
+                        if (products?.isNotEmpty() == true)
+                            buyProductButton.isEnabled = true
                     }
                 }
-                Toast.makeText(this, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
+                buyProductButton -> {
+                    products?.first()?.let {
+                        billingManager.purchase(this, it.product_id, KinAppProductType.INAPP)
+                    }
+                }
+                consumePurchasesButton -> {
+                    purchases?.forEach {
+                        runBlocking {
+                            billingManager.consumePurchase(it)
+                            consumePurchasesButton.isEnabled = false
+                        }
+                    }
+                    Toast.makeText(this, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
+                }
+                restorePurchasesButton -> {
+                    purchases = billingManager.restorePurchases(KinAppProductType.INAPP) as MutableList<KinAppPurchase>
+                    Toast.makeText(this, "Restored " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
+                    if (purchases?.isNotEmpty() == true)
+                        consumePurchasesButton.isEnabled = true
+                }
             }
-            restorePurchasesButton -> {
-                purchases = billingManager.restorePurchases(KinAppProductType.INAPP) as MutableList<KinAppPurchase>
-                Toast.makeText(this, "Restored " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
-                if (purchases?.isNotEmpty() == true)
-                    consumePurchasesButton.isEnabled = true
-            }
+        } else {
+            displayPurchaseDialog(
+                    title = "In App not supported",
+                    content = "You need the Play services to handle in app purchase"
+            )
         }
     }
 
@@ -110,16 +117,28 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnC
                 }
             }
             KinAppPurchaseResult.ALREADY_OWNED -> {
-                displayPurchaseDialog(title = "Purchase already owned", content = "You already own this item. If you need to buy it again, consider consuming it first (you may need to restore your purchases before that)")
+                displayPurchaseDialog(
+                        title = "Purchase already owned",
+                        content = "You already own this item. If you need to buy it again, consider consuming it first (you may need to restore your purchases before that)"
+                )
             }
             KinAppPurchaseResult.INVALID_PURCHASE -> {
-                displayPurchaseDialog(title = "Error while buying item", content = "Purchase invalid")
+                displayPurchaseDialog(
+                        title = "Error while buying item",
+                        content = "Purchase invalid"
+                )
             }
             KinAppPurchaseResult.INVALID_SIGNATURE -> {
-                displayPurchaseDialog(title = "Error while buying item", content = "Signature invalid")
+                displayPurchaseDialog(
+                        title = "Error while buying item",
+                        content = "Signature invalid"
+                )
             }
             KinAppPurchaseResult.CANCEL -> {
-                displayPurchaseDialog(title = "Purchase canceled", content = "You have canceled your purchase")
+                displayPurchaseDialog(
+                        title = "Purchase canceled",
+                        content = "You have canceled your purchase"
+                )
             }
         }
     }

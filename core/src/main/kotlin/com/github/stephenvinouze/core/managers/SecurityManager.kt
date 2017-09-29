@@ -46,7 +46,7 @@ object SecurityManager {
      * *
      * @throws IllegalArgumentException if encodedPublicKey is invalid
      */
-    fun generatePublicKey(encodedPublicKey: String): PublicKey {
+    private fun generatePublicKey(encodedPublicKey: String): PublicKey {
         try {
             val decodedKey = Base64.decode(encodedPublicKey, Base64.DEFAULT)
             val keyFactory = KeyFactory.getInstance(KEY_FACTORY_ALGORITHM)
@@ -71,7 +71,7 @@ object SecurityManager {
      * *
      * @return true if the data and signature match
      */
-    fun verify(publicKey: PublicKey, signedData: String, signature: String): Boolean {
+    private fun verify(publicKey: PublicKey, signedData: String, signature: String): Boolean {
         val signatureBytes: ByteArray
         try {
             signatureBytes = Base64.decode(signature, Base64.DEFAULT)

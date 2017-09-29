@@ -12,7 +12,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.12"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.18"
 
     compile "org.parceler:parceler-api:$parcel_version"
     kapt "org.parceler:parceler:$parcel_version"
