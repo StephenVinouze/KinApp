@@ -3,11 +3,9 @@ package com.github.stephenvinouze.kinapp
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
-import butterknife.BindView
-import butterknife.ButterKnife
-import butterknife.OnClick
 import com.afollestad.materialdialogs.MaterialDialog
 import com.github.stephenvinouze.core.managers.KinAppManager
 import com.github.stephenvinouze.core.models.KinAppProduct
@@ -16,19 +14,12 @@ import com.github.stephenvinouze.core.models.KinAppPurchase
 import com.github.stephenvinouze.core.models.KinAppPurchaseResult
 import kotlinx.coroutines.experimental.runBlocking
 
-class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener {
+class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnClickListener {
 
-    @BindView(R.id.fetch_products_button)
-    lateinit var fetchProductsButton: Button
-
-    @BindView(R.id.buy_available_product_button)
-    lateinit var buyProductButton: Button
-
-    @BindView(R.id.consume_purchases_button)
-    lateinit var consumePurchasesButton: Button
-
-    @BindView(R.id.restore_purchases_button)
-    lateinit var restorePurchasesButton: Button
+    private val fetchProductsButton: Button by lazy { findViewById<Button>(R.id.fetch_products_button) }
+    private val buyProductButton: Button by lazy { findViewById<Button>(R.id.buy_available_product_button) }
+    private val consumePurchasesButton: Button by lazy { findViewById<Button>(R.id.consume_purchases_button) }
+    private val restorePurchasesButton: Button by lazy { findViewById<Button>(R.id.restore_purchases_button) }
 
     /**
      * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -44,12 +35,16 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        ButterKnife.bind(this)
 
         fetchProductsButton.isEnabled = false
         buyProductButton.isEnabled = false
         consumePurchasesButton.isEnabled = false
         restorePurchasesButton.isEnabled = false
+
+        fetchProductsButton.setOnClickListener(this)
+        buyProductButton.setOnClickListener(this)
+        consumePurchasesButton.setOnClickListener(this)
+        restorePurchasesButton.setOnClickListener(this)
 
         billingManager.bind(this)
     }
@@ -67,40 +62,37 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener {
                 .show()
     }
 
-    @OnClick(R.id.fetch_products_button)
-    fun onFetchProductsClick() {
-        runBlocking {
-            products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP) as MutableList<KinAppProduct>
-            Toast.makeText(this@MainActivity, "Fetched " + products?.size + " products", Toast.LENGTH_LONG).show()
-            if (products?.isNotEmpty() == true)
-                buyProductButton.isEnabled = true
-        }
-    }
-
-    @OnClick(R.id.buy_available_product_button)
-    fun onBuyAvailableProductClick() {
-        products?.first()?.let {
-            billingManager.purchase(this, it.product_id, KinAppProductType.INAPP)
-        }
-    }
-
-    @OnClick(R.id.consume_purchases_button)
-    fun onConsumePurchasesClick() {
-        purchases?.forEach {
-            runBlocking {
-                billingManager.consumePurchase(it)
-                consumePurchasesButton.isEnabled = false
+    override fun onClick(view: View?) {
+        when (view) {
+            fetchProductsButton -> {
+                runBlocking {
+                    products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP) as MutableList<KinAppProduct>
+                    Toast.makeText(this@MainActivity, "Fetched " + products?.size + " products", Toast.LENGTH_LONG).show()
+                    if (products?.isNotEmpty() == true)
+                        buyProductButton.isEnabled = true
+                }
+            }
+            buyProductButton -> {
+                products?.first()?.let {
+                    billingManager.purchase(this, it.product_id, KinAppProductType.INAPP)
+                }
+            }
+            consumePurchasesButton -> {
+                purchases?.forEach {
+                    runBlocking {
+                        billingManager.consumePurchase(it)
+                        consumePurchasesButton.isEnabled = false
+                    }
+                }
+                Toast.makeText(this, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
+            }
+            restorePurchasesButton -> {
+                purchases = billingManager.restorePurchases(KinAppProductType.INAPP) as MutableList<KinAppPurchase>
+                Toast.makeText(this, "Restored " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
+                if (purchases?.isNotEmpty() == true)
+                    consumePurchasesButton.isEnabled = true
             }
         }
-        Toast.makeText(this, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
-    }
-
-    @OnClick(R.id.restore_purchases_button)
-    fun onRestorePurchasesClick() {
-        purchases = billingManager.restorePurchases(KinAppProductType.INAPP) as MutableList<KinAppPurchase>
-        Toast.makeText(this, "Restored " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
-        if (purchases?.isNotEmpty() == true)
-            consumePurchasesButton.isEnabled = true
     }
 
     override fun onBillingReady() {
