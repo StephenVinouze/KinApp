@@ -12,6 +12,7 @@ import android.os.RemoteException
 import com.android.vending.billing.IInAppBillingService
 import com.github.stephenvinouze.core.models.*
 import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.async
 import org.json.JSONObject
 
@@ -80,7 +81,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
     fun isBillingSupported(productType: KinAppProductType): Boolean =
             billingService?.isBillingSupported(KINAPP_API_VERSION, context.packageName, productType.value) == KINAPP_RESPONSE_RESULT_OK
 
-    suspend fun fetchProducts(productIds: ArrayList<String>, productType: KinAppProductType): List<KinAppProduct>? {
+    suspend fun fetchProducts(productIds: ArrayList<String>, productType: KinAppProductType): Deferred<List<KinAppProduct>?> {
         return async(CommonPool) {
             val bundle = Bundle()
             bundle.putStringArrayList(GET_ITEM_LIST, productIds)
@@ -94,12 +95,11 @@ class KinAppManager(private val context: Context, private val developerPayload: 
                     }
                     return@async products
                 }
-                return@async null
             } catch (e: RemoteException) {
                 e.printStackTrace()
-                return@async null
             }
-        }.await()
+            return@async null
+        }
     }
 
     fun restorePurchases(productType: KinAppProductType): List<KinAppPurchase>? {
@@ -152,7 +152,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
         return false
     }
 
-    suspend fun consumePurchase(purchase: KinAppPurchase): Boolean {
+    suspend fun consumePurchase(purchase: KinAppPurchase): Deferred<Boolean> {
         return async(CommonPool) {
             try {
                 val response = billingService?.consumePurchase(KINAPP_API_VERSION, this@KinAppManager.context.packageName, purchase.purchaseToken)
@@ -161,7 +161,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
                 e.printStackTrace()
                 return@async false
             }
-        }.await()
+        }
     }
 
     private fun getResult(responseBundle: Bundle?, responseExtra: String): Int? =

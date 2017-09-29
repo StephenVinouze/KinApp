@@ -110,8 +110,8 @@ Once your **KinAppManager** is configured, you can use the various features offe
 As soon as you have configured your application on the Developer console and added some InApp products, you can retrieve them in your application ( :warning: Suspend call) :
 
 ```kotlin
-runBlocking {
-	val products = billingManager.fetchProducts(<your_products_id_here>, KinAppProductType.INAPP)
+launch(UI) {
+	val products = billingManager.fetchProducts(<your_products_id_here>, KinAppProductType.INAPP).await()
 }
 ```
 
@@ -130,8 +130,8 @@ billingManager.purchase(this, <your_products_id_here>, KinAppProductType.INAPP)
 This part is only relevant to **INAPP** product types. A InApp product can be either consumable or one-time-purchase type. When you purchase an item, you own it. Unless you decide to consume it, you won't be able to re-purchase this item. This is important to understand this and distinguish between the two types of InApp products. You can consume an item by using these lines ( :warning: Suspend call) :
 
 ```kotlin
-runBlocking {
-	billingManager.consumePurchase(<your_purchase_object>)
+launch(UI) {
+	val success = billingManager.consumePurchase(<your_purchase_object>).await()
 }
 ```
 

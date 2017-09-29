@@ -12,7 +12,8 @@ import com.github.stephenvinouze.core.models.KinAppProduct
 import com.github.stephenvinouze.core.models.KinAppProductType
 import com.github.stephenvinouze.core.models.KinAppPurchase
 import com.github.stephenvinouze.core.models.KinAppPurchaseResult
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.launch
 
 class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnClickListener {
 
@@ -66,8 +67,9 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnC
         if (billingManager.isBillingSupported(KinAppProductType.INAPP)) {
             when (view) {
                 fetchProductsButton -> {
-                    runBlocking {
-                        products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP) as MutableList<KinAppProduct>
+                    launch(UI) {
+                        products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP).await()?.toMutableList()
+
                         Toast.makeText(this@MainActivity, "Fetched " + products?.size + " products", Toast.LENGTH_LONG).show()
                         if (products?.isNotEmpty() == true)
                             buyProductButton.isEnabled = true
@@ -79,13 +81,13 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnC
                     }
                 }
                 consumePurchasesButton -> {
-                    purchases?.forEach {
-                        runBlocking {
-                            billingManager.consumePurchase(it)
-                            consumePurchasesButton.isEnabled = false
+                    launch(UI) {
+                        purchases?.forEach {
+                            billingManager.consumePurchase(it).await()
                         }
+                        Toast.makeText(this@MainActivity, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
+                        consumePurchasesButton.isEnabled = false
                     }
-                    Toast.makeText(this, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
                 }
                 restorePurchasesButton -> {
                     purchases = billingManager.restorePurchases(KinAppProductType.INAPP) as MutableList<KinAppPurchase>
