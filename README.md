@@ -2,6 +2,7 @@
 [![Release](https://jitpack.io/v/StephenVinouze/KinApp.svg)](https://jitpack.io/#StephenVinouze/KinApp)
 [![Build Status](https://travis-ci.org/StephenVinouze/KinApp.svg?branch=master)](https://travis-ci.org/StephenVinouze/KinApp)
 [![API](https://img.shields.io/badge/API-9%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=9)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-KinApp-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/5744)
 [![GitHub
 license](http://img.shields.io/badge/license-APACHE2-blue.svg)](https://github.com/StephenVinouze/AdvancedRecyclerView/blob/master/LICENSE)
 
@@ -21,7 +22,7 @@ Then add the following dependency in your project.
 
 ```gradle
 dependencies {
-  compile "com.github.StephenVinouze.KinApp:core:1.0.0"
+  compile "com.github.StephenVinouze:KinApp:1.0.0"
 }
 ```
 
