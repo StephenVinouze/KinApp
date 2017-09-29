@@ -22,9 +22,17 @@ Then add the following dependency in your project.
 
 ```gradle
 dependencies {
-  compile "com.github.StephenVinouze:KinApp:1.0.0"
+  compile "com.github.StephenVinouze:KinApp:{latest_version}"
+}
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
 }
 ```
+
+:warning: Do not forget to enable coroutines in your project as this library needs them
 
 ## Configuring your InApp Purchase
 
