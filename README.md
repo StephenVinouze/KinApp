@@ -115,7 +115,7 @@ launch(UI) {
 }
 ```
 
-You can specify the nature of the product you want to fetch. It can be either of type **INAPP** or **SUBSCRIPTION**. This call is marked as *suspend* as it needs to be run asynchronously without blocking the main thread. This is why you must wrap it inside a `runBlocking` block.
+You can specify the nature of the product you want to fetch. It can be either of type **INAPP** or **SUBSCRIPTION**. This call is marked as *suspend* as it needs to be run asynchronously without blocking the main thread.
 
 ### Purchase product
 
