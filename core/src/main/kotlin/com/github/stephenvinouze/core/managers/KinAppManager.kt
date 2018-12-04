@@ -11,9 +11,8 @@ import android.os.IBinder
 import android.os.RemoteException
 import com.android.vending.billing.IInAppBillingService
 import com.github.stephenvinouze.core.models.*
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.*
+import kotlinx.coroutines.android.Main
 import org.json.JSONObject
 
 
@@ -82,7 +81,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
             billingService?.isBillingSupported(KINAPP_API_VERSION, context.packageName, productType.value) == KINAPP_RESPONSE_RESULT_OK
 
     suspend fun fetchProducts(productIds: ArrayList<String>, productType: KinAppProductType): Deferred<List<KinAppProduct>?> {
-        return async(CommonPool) {
+        return GlobalScope.async(Dispatchers.Main, CoroutineStart.DEFAULT) {
             val bundle = Bundle()
             bundle.putStringArrayList(GET_ITEM_LIST, productIds)
             try {
@@ -153,7 +152,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
     }
 
     suspend fun consumePurchase(purchase: KinAppPurchase): Deferred<Boolean> {
-        return async(CommonPool) {
+        return GlobalScope.async(Dispatchers.Main, CoroutineStart.DEFAULT) {
             try {
                 val response = billingService?.consumePurchase(KINAPP_API_VERSION, this@KinAppManager.context.packageName, purchase.purchaseToken)
                 return@async response == KINAPP_RESPONSE_RESULT_OK
