@@ -1,13 +1,13 @@
 package com.github.stephenvinouze.core.models
 
-import org.parceler.Parcel
-import org.parceler.ParcelConstructor
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
 
 /**
  * Created by stephenvinouze on 10/02/2017.
  */
-@Parcel(Parcel.Serialization.BEAN)
-data class KinAppPurchase @ParcelConstructor constructor(
+@Parcelize
+data class KinAppPurchase(
         val orderId: String,
         val productId: String,
         val purchaseTime: Long,
@@ -15,4 +15,4 @@ data class KinAppPurchase @ParcelConstructor constructor(
         val purchaseState: KinAppPurchaseState,
         val packageName: String,
         val developerPayload: String,
-        val autoRenewing: Boolean)
+        val autoRenewing: Boolean) : Parcelable

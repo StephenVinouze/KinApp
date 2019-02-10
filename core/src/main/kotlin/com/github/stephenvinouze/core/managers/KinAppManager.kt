@@ -12,7 +12,6 @@ import android.os.RemoteException
 import com.android.vending.billing.IInAppBillingService
 import com.github.stephenvinouze.core.models.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.android.Main
 import org.json.JSONObject
 
 
@@ -22,14 +21,14 @@ import org.json.JSONObject
 class KinAppManager(private val context: Context, private val developerPayload: String) {
 
     companion object {
-        val TEST_PURCHASE_PREFIX = "android.test"
-        val TEST_PURCHASE_SUCCESS = TEST_PURCHASE_PREFIX + ".purchased"
-        val TEST_PURCHASE_CANCELED = TEST_PURCHASE_PREFIX + ".canceled"
-        val TEST_PURCHASE_REFUNDED = TEST_PURCHASE_PREFIX + ".refunded"
-        val TEST_PURCHASE_UNAVAILABLE = TEST_PURCHASE_PREFIX + ".item_unavailable"
+        const val TEST_PURCHASE_PREFIX = "android.test"
+        const val TEST_PURCHASE_SUCCESS = "$TEST_PURCHASE_PREFIX.purchased"
+        const val TEST_PURCHASE_CANCELED = "$TEST_PURCHASE_PREFIX.canceled"
+        const val TEST_PURCHASE_REFUNDED = "$TEST_PURCHASE_PREFIX.refunded"
+        const val TEST_PURCHASE_UNAVAILABLE = "$TEST_PURCHASE_PREFIX.item_unavailable"
 
-        val INAPP_TYPE = "inapp"
-        val SUBS_TYPE = "subs"
+        const val INAPP_TYPE = "inapp"
+        const val SUBS_TYPE = "subs"
 
         private const val KINAPP_REQUEST_CODE = 1001
         private const val KINAPP_RESPONSE_RESULT_OK = 0
@@ -80,7 +79,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
     fun isBillingSupported(productType: KinAppProductType): Boolean =
             billingService?.isBillingSupported(KINAPP_API_VERSION, context.packageName, productType.value) == KINAPP_RESPONSE_RESULT_OK
 
-    suspend fun fetchProducts(productIds: ArrayList<String>, productType: KinAppProductType): Deferred<List<KinAppProduct>?> {
+    suspend fun fetchProductsAsync(productIds: ArrayList<String>, productType: KinAppProductType): Deferred<List<KinAppProduct>?> {
         return GlobalScope.async(Dispatchers.Main, CoroutineStart.DEFAULT) {
             val bundle = Bundle()
             bundle.putStringArrayList(GET_ITEM_LIST, productIds)
@@ -151,7 +150,7 @@ class KinAppManager(private val context: Context, private val developerPayload: 
         return false
     }
 
-    suspend fun consumePurchase(purchase: KinAppPurchase): Deferred<Boolean> {
+    suspend fun consumePurchaseAsync(purchase: KinAppPurchase): Deferred<Boolean> {
         return GlobalScope.async(Dispatchers.Main, CoroutineStart.DEFAULT) {
             try {
                 val response = billingService?.consumePurchase(KINAPP_API_VERSION, this@KinAppManager.context.packageName, purchase.purchaseToken)

@@ -15,8 +15,6 @@ import com.github.stephenvinouze.core.models.KinAppPurchaseResult
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.android.Main
-import kotlinx.coroutines.android.UI
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnClickListener {
@@ -72,7 +70,7 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnC
             when (view) {
                 fetchProductsButton -> {
                     GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT) {
-                        products = billingManager.fetchProducts(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP).await()?.toMutableList()
+                        products = billingManager.fetchProductsAsync(arrayListOf(KinAppManager.TEST_PURCHASE_SUCCESS), KinAppProductType.INAPP).await()?.toMutableList()
 
                         Toast.makeText(this@MainActivity, "Fetched " + products?.size + " products", Toast.LENGTH_LONG).show()
                         if (products?.isNotEmpty() == true)
@@ -87,7 +85,7 @@ class MainActivity : AppCompatActivity(), KinAppManager.KinAppListener, View.OnC
                 consumePurchasesButton -> {
                     GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT) {
                         purchases?.forEach {
-                            billingManager.consumePurchase(it).await()
+                            billingManager.consumePurchaseAsync(it).await()
                         }
                         Toast.makeText(this@MainActivity, "Consumed " + purchases?.size + " purchases", Toast.LENGTH_LONG).show()
                         consumePurchasesButton.isEnabled = false

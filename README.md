@@ -24,12 +24,6 @@ Then add the following dependency in your project.
 dependencies {
   compile "com.github.StephenVinouze:KinApp:{latest_version}"
 }
-
-kotlin {
-    experimental {
-        coroutines "enable"
-    }
-}
 ```
 
 :warning: Do not forget to enable coroutines in your project as this library needs them
@@ -111,7 +105,7 @@ As soon as you have configured your application on the Developer console and add
 
 ```kotlin
 launch(UI) {
-	val products = billingManager.fetchProducts(<your_products_id_here>, KinAppProductType.INAPP).await()
+	val products = billingManager.fetchProductsAsync(<your_products_id_here>, KinAppProductType.INAPP).await()
 }
 ```
 
@@ -131,7 +125,7 @@ This part is only relevant to **INAPP** product types. A InApp product can be ei
 
 ```kotlin
 launch(UI) {
-	val success = billingManager.consumePurchase(<your_purchase_object>).await()
+	val success = billingManager.consumePurchaseAsync(<your_purchase_object>).await()
 }
 ```
 

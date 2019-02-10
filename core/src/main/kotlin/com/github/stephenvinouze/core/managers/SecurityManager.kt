@@ -13,9 +13,9 @@ import java.security.spec.X509EncodedKeySpec
  */
 object SecurityManager {
 
-    private val TAG = "SecurityManager"
-    private val KEY_FACTORY_ALGORITHM = "RSA"
-    private val SIGNATURE_ALGORITHM = "SHA1withRSA"
+    private const val TAG = "SecurityManager"
+    private const val KEY_FACTORY_ALGORITHM = "RSA"
+    private const val SIGNATURE_ALGORITHM = "SHA1withRSA"
 
     /**
      * Verifies that the data was signed with the given signature, and returns
