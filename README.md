@@ -22,7 +22,7 @@ Then add the following dependency in your project.
 
 ```gradle
 dependencies {
-  compile "com.github.StephenVinouze:KinApp:{latest_version}"
+  implementation "com.github.StephenVinouze:KinApp:{latest_version}"
 }
 ```
 
