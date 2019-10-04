@@ -30,7 +30,7 @@ dependencies {
 
 ## Configuring your InApp Purchase
 
-Before integrating this library to manage your IAP, you probably must have already configured your application to integrate some products that you want your end users to buy. Understanding how this is done is rather well documented, but can be quite confusing as to how it really works. In addition to this library, I redacted [an article on Medium](https://medium.com/@s.vinouze/testing-in-app-purchase-for-android-4b62a7d1da42) a complete workflow to properly configure your IAP step by step.
+Before integrating this library to manage your IAP, you probably must have already configured your application to integrate some products that you want your end users to buy. Understanding how this is done is rather well documented, but can be quite confusing as to how it really works. In addition to this library, I redacted [an article on Medium](https://medium.com/@s.vinouze/testing-in-app-purchase-for-android-4b62a7d1da42) that describes a complete workflow to properly configure your IAP step by step.
 
 ## Getting started
 
